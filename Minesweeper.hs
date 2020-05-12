@@ -243,8 +243,6 @@ game :: IO Board -> IO Board -> IO ()
 game v h = do
     v' <- v
     h' <- h
-    printBoard h'
-    putChar '\n'
     loop v' h' Continue
     where
         loop :: Board -> Board -> Done -> IO ()
