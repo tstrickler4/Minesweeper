@@ -8,6 +8,24 @@ import Data.Char
 import System.Console.ANSI -- cabal install ansi-terminal
 import Data.Colour.SRGB
 
+{-
+Instructions for use:
+
+To start a new game, simply run main.
+
+How to Play:
+
+The user will be presented a 9x9 grid with row IDs along the left side
+and column IDs along the top. Hidden somewhere on the board are ten
+mines. The user will be prompted to either flag a cell or reveal a
+cell. If the user reveals a cell, then if the cell is not a mine, it
+will cascade to all adjacent cells until it reaches a cell with a
+digit value. Any cells with a digit value represent the number of
+mines in the adjacent eight cells. If the user suspects a cell
+contains a mine, they may choose to flag it. To remove a flag, simply
+flag the cell again. To win the game, all ten mines must be flagged.
+-}
+
 type Board = [[Char]]
 
 data Done = Win | Lose | Continue
@@ -64,7 +82,7 @@ printBoard b = do
             | otherwise = lookup c cs
         lookup c _ = error $ "invalid char " ++ show c
 
--- Determines if the given coordinates is a valid position in a Board.
+-- Determines if the given set of coordinates is a valid position in a Board.
 inBoard :: Int -> Int -> Bool
 inBoard i j = i >= 0 && i <= 8 && j >= 0 && j <= 8
 
@@ -75,7 +93,7 @@ shuffle xs = do
   perm <- getStdRandom (randomPermutation n)
   return $ permuteList perm xs
 
--- Counts the number of occurrences in a list.
+-- Counts the number of occurrences of an item in a list.
 count :: Eq a => a -> [a] -> Int
 count x = length . filter (==x)
 
@@ -136,7 +154,7 @@ setElem i x' a@(x : xs)
     | i < length a = x : setElem (i - 1) x' xs
     | otherwise = error $ "unable to set element at index " ++ show i ++ ": index out of bounds"
 
--- Take a row and column from the user and reveal the corresponding cell(s) in the Board.
+-- Takes a row and column from the user and reveals the corresponding cell(s) in the Board.
 updateBoard :: Board -> Board -> IO (Board, Done)
 updateBoard v h = do
     i <- getVal "Enter row (A-I): " (\i -> toUpper i `elem` ['A'..'I']) "Invalid row\n"
@@ -182,6 +200,7 @@ printColorStr s fc bc = do
     putStr s
     setSGR [Reset]
 
+-- Counts the number of correctly placed flags.
 countFlags :: Board -> Board -> Int
 countFlags v h = countFlags' 0 0 v h
     where
@@ -196,6 +215,7 @@ countFlags v h = countFlags' 0 0 v h
             | otherwise = countFlags' i (j+1) (xs : xss) (ys : yss)
         countFlags' i j v h = error $ "unable to count flags: error occured at position (" ++ show i ++ ", " ++ show j ++ ")"
 
+-- Gets a Char from the user and checks if it's valid according to the given function.
 getAction :: String -> (Char -> Bool) -> String -> IO Char
 getAction p f e = do
     putStr p
@@ -206,6 +226,8 @@ getAction p f e = do
         getAction p f e
     else return $ toUpper x
 
+-- Gets a Char from the user and checks if it's valid according to the given fuction.
+-- Note: This utilizes the charToInt function, which requires the input to be in the range '1'-'9' or 'A'-'I'.
 getVal :: String -> (Char -> Bool) -> String -> IO Int
 getVal p f e = do
     putStr p
@@ -216,6 +238,7 @@ getVal p f e = do
         getVal p f e
     else return $ (charToInt $ toUpper x) - 1
 
+-- Generates a random board and plays a single game of Minesweeper.
 game :: IO Board -> IO Board -> IO ()
 game v h = do
     v' <- v
@@ -257,3 +280,7 @@ game v h = do
                     loop v' h d'
                 else do
                     loop v h Win
+
+main :: IO ()
+main = do
+    game view hidden
