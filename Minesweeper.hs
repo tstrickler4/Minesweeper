@@ -23,6 +23,14 @@ with a digit value. Any cells with a digit value represent the number of mines
 in the adjacent eight cells. If you suspects a cell contains a mine, you may
 choose to flag it. To remove a flag, simply flag the cell again. To win the
 game, all ten mines must be flagged.
+
+Note:
+
+Occasionally, cascading on a reveal will take awhile to perform. Just give it
+time. I also can't guarantee the colors will render correctly as it seems to be
+somewhat machine dependent. Hopefully they work for you. You may also need to
+install some additional packages to run the program as pointed out in the
+imports above.
 -}
 
 type Board = [[Char]]
