@@ -15,15 +15,14 @@ To start a new game, simply run main.
 
 How to Play:
 
-The user will be presented a 9x9 grid with row IDs along the left side
-and column IDs along the top. Hidden somewhere on the board are ten
-mines. The user will be prompted to either flag a cell or reveal a
-cell. If the user reveals a cell, then if the cell is not a mine, it
-will cascade to all adjacent cells until it reaches a cell with a
-digit value. Any cells with a digit value represent the number of
-mines in the adjacent eight cells. If the user suspects a cell
-contains a mine, they may choose to flag it. To remove a flag, simply
-flag the cell again. To win the game, all ten mines must be flagged.
+You will be presented a 9x9 grid with row IDs along the left side and column IDs
+along the top. Hidden somewhere on the board are ten mines. You will be prompted
+to either flag a cell or reveal a cell. If you reveal a cell, then if the cell
+is not a mine, it will cascade to all adjacent cells until it reaches a cell
+with a digit value. Any cells with a digit value represent the number of mines
+in the adjacent eight cells. If you suspects a cell contains a mine, you may
+choose to flag it. To remove a flag, simply flag the cell again. To win the
+game, all ten mines must be flagged.
 -}
 
 type Board = [[Char]]
@@ -73,7 +72,7 @@ printBoard b = do
         colorize c = do
             let m = [('1', sRGB 0 0 255), ('2', sRGB 0 255 0), ('3', sRGB 255 0 0), ('4', sRGB 128 0 255),
                      ('5', sRGB 153 0 77), ('6', sRGB 0 255 255), ('7', sRGB 0 0 0), ('8', sRGB 128 128 128),
-                     ('.', sRGB 0 0 0), ('_', sRGB 0 0 0), ('X', sRGB 255 0 0), ('F', sRGB 255 0 0)]
+                     ('.', sRGB 0 0 0), (' ', sRGB 0 0 0), ('X', sRGB 255 0 0), ('F', sRGB 255 0 0)]
             let v = lookup c m
             printColorStr [c] v (sRGB 255 255 255)
         lookup :: Char -> [(Char, Colour Float)] -> Colour Float
@@ -120,12 +119,12 @@ view = return [['.' | _ <- [1..9]] | _ <- [1..9]]
 -- The Board hidden behind the scenes which contains all the bombs and counts of adjacent bombs.
 hidden :: IO Board
 hidden = do
-    b <- shuffle $ ['X' | _ <- [1..10]] ++ ['_' | _ <- [1..71]]
+    b <- shuffle $ ['X' | _ <- [1..10]] ++ [' ' | _ <- [1..71]]
     return $ findBombs 0 0 (listToBoard b)
     where
         findBombs :: Int -> Int -> Board -> Board
         findBombs 8 8 b = setElem 8 (setElem 8 (bombCount 8 8 b) (b !! 8)) b
-        findBombs i j b = if b !! i !! j == '_' then
+        findBombs i j b = if b !! i !! j == ' ' then
                                 let b' = setElem i (setElem j (bombCount i j b) (b !! i)) b in
                                 if j == 8 then
                                     findBombs (i+1) 0 b'
@@ -134,7 +133,7 @@ hidden = do
                                 findBombs (i+1) 0 b
                             else findBombs i (j+1) b
         bombCount :: Int -> Int -> Board -> Char
-        bombCount i j b = let x = intToChar $ count 'X' (adjacent i j b) in if x == '0' then '_' else x
+        bombCount i j b = let x = intToChar $ count 'X' (adjacent i j b) in if x == '0' then ' ' else x
         adjacent :: Int -> Int -> Board -> [Char]
         adjacent i j b =
             (if inBoard (i-1) (j-1) then [b !! (i-1) !! (j-1)] else []) ++
@@ -183,7 +182,7 @@ updateBoard v h = do
                 else if y == 'X' then
                     return (h, Lose)
                 else do
-                    let v' = setElem i (setElem j '_' (v !! i)) v
+                    let v' = setElem i (setElem j ' ' (v !! i)) v
                     (v2, _) <- reveal (i-1) (j-1) v' h ((i, j) : m)
                     (v3, _) <- reveal (i-1) j v2 h ((i, j) : (i-1, j-1) : m)
                     (v4, _) <- reveal (i-1) (j+1) v3 h ((i, j) : (i-1, j-1) : (i-1, j) : m)
@@ -249,12 +248,15 @@ game v h = do
         loop v h d = do
             if d == Win then do
                 printBoard h
-                putStr "\aCongratulations! You win!\n"
+                putChar '\n'
+                putStr "\aCongratulations! You win!\n\n"
             else if d == Lose then do
                 printBoard h
-                putStr "\aYou lose. Better luck next time!\n"
+                putChar '\n'
+                putStr "\aYou lose. Better luck next time!\n\n"
             else do
                 printBoard v
+                putChar '\n'
                 a <- getAction "Enter 'F' for flag or 'R' for reveal: " (\x -> toUpper x `elem` ['F', 'R']) "Invalid action\n"
                 if a == 'F' then do
                     i <- getVal "Enter row (A-I): " (\i -> toUpper i `elem` ['A'..'I']) "Invalid row\n"
@@ -281,4 +283,13 @@ game v h = do
 
 main :: IO ()
 main = do
+    putStr "\nHow to Play:\n\n"
+    putStr "You will be presented a 9x9 grid with row IDs along the left side and column IDs\n"
+    putStr "along the top. Hidden somewhere on the board are ten mines. You will be prompted\n"
+    putStr "to either flag a cell or reveal a cell. If you reveal a cell, then if the cell\n"
+    putStr "is not a mine, it will cascade to all adjacent cells until it reaches a cell\n"
+    putStr "with a digit value. Any cells with a digit value represent the number of mines\n"
+    putStr "in the adjacent eight cells. If you suspects a cell contains a mine, you may\n"
+    putStr "choose to flag it. To remove a flag, simply flag the cell again. To win the\n"
+    putStr "game, all ten mines must be flagged.\n\n"
     game view hidden
